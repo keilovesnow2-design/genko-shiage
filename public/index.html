@@ -77,7 +77,7 @@
       <div class="intro">
         <p class="intro-lead">原稿の中の言葉や文章を、別の書き方に置き換えます。登録したルールは、次の原稿でもずっと使えます。</p>
         <ul class="uses">
-          <li><b>言葉の読みを直す</b><span>例：「思考」→「しこう」</span></li>
+          <li><b>言葉の読みを直す</b><span>例：「下書き」→「したがき」（「しもがき」と読まれるのを防ぐ）</span></li>
           <li><b>一節・一文をまるごと言い換える</b><span>例：長い文章を貼って、別の文章に差し替える</span></li>
         </ul>
       </div>
@@ -108,11 +108,12 @@
       <ul class="rule-list" id="rule-list"></ul>
       <p class="empty" id="rule-empty">まだルールがありません。「＋ ルールを追加」を押して、「原文」と「修正後」を書いてください。</p>
       <p class="note small">「ゆるく一致」にチェックすると、空白や句読点が違っていても置き換えます（長い文章向け）。</p>
+      <p class="note small">同じ言葉でも、前後によって読みが変わるときは、前後の言葉も含めて登録できます（例：「思考を整理」→「しこうを整理」）。長い言葉が優先して置き換わります。</p>
 
       <details class="bulk">
         <summary>たくさんまとめて追加する</summary>
         <p class="note small">1行に1つ、「原文 → 修正後」の形で貼り付けます（区切りは → ／ = ／ カンマ ／ タブ）。同じ言葉が登録済みなら上書きします。</p>
-        <textarea id="bulk-text" rows="5" spellcheck="false" placeholder="思考 → しこう&#10;二十日間 → 20日間"></textarea>
+        <textarea id="bulk-text" rows="5" spellcheck="false" placeholder="下書き → したがき&#10;二十日間 → 20日間"></textarea>
         <div class="bulk-foot">
           <button class="btn soft" id="btn-bulk" type="button">まとめて追加</button>
           <span class="hint" id="bulk-msg"></span>

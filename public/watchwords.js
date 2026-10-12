@@ -6,6 +6,7 @@
 // 元はひらがな化ツール(check.js)の読みチェックの一覧。MiniMax で実際にどう読まれるかは未検証。
 (function (root) {
   root.GenkoWatchWords = [
+    { word: '下書き', readings: ['したがき'], hint: '「しもがき」と読まれやすい語（複数の音声ツールで確認）' },
     { word: '一日', readings: ['いちにち', 'ついたち'], hint: '期間＝いちにち ／ 日付＝ついたち' },
     { word: '1日', readings: ['いちにち', 'ついたち'], hint: '期間＝いちにち ／ 日付＝ついたち' },
     { word: '人気', readings: ['にんき', 'ひとけ'], hint: '評判＝にんき ／ 人の気配＝ひとけ' },
