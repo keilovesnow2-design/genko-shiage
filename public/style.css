@@ -1,0 +1,393 @@
+/* 原稿仕上げ — 「校正（朱入れ）」のイメージ
+   紙の地色・墨色の文字・朱色の置き換え箇所。原稿用紙の罫線。 */
+:root {
+  color-scheme: light;
+  --paper: #f6f1e6;
+  --paper-2: #fbf8f1;
+  --card: #fffdf8;
+  --ink: #1b2236;
+  --ink-2: #566074;
+  --line: #e2d9c5;
+  --rule: #e9e0cc;          /* 原稿用紙の罫線 */
+  --indigo: #25346b;        /* 見出しの帯・主ボタン */
+  --indigo-2: #3b4f9a;
+  --btn-a: #3b4f9a;         /* 主ボタンのグラデーション（文字は白） */
+  --btn-b: #25346b;
+  --indigo-soft: #e7eaf6;
+  --soft-ink: #25346b;      /* 淡い地の上の青文字 */
+  --shu: #d6402f;           /* 朱 */
+  --shu-soft: rgba(214, 64, 47, .13);
+  --shu-ink: #a82b1c;
+  --num-soft: rgba(37, 52, 107, .12);
+  --danger: #b4302a;
+  --shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 2px 4px rgba(40, 30, 10, .05), 0 14px 32px rgba(40, 30, 10, .08);
+  --radius: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #111522;
+    --paper-2: #151a2a;
+    --card: #1a2033;
+    --ink: #eceef5;
+    --ink-2: #a6adc2;
+    --line: #2c3450;
+    --rule: #252d47;
+    --indigo: #1d2754;
+    --indigo-2: #8ea2f0;
+    --btn-a: #4a5fc0;
+    --btn-b: #34439a;
+    --indigo-soft: #232c52;
+    --soft-ink: #8ea2f0;
+    --shu: #ff6a57;
+    --shu-soft: rgba(255, 106, 87, .18);
+    --shu-ink: #ff9486;
+    --num-soft: rgba(142, 162, 240, .2);
+    --danger: #ff8d82;
+    --shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 2px 4px rgba(0, 0, 0, .3), 0 14px 32px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #111522;
+  --paper-2: #151a2a;
+  --card: #1a2033;
+  --ink: #eceef5;
+  --ink-2: #a6adc2;
+  --line: #2c3450;
+  --rule: #252d47;
+  --indigo: #1d2754;
+  --indigo-2: #8ea2f0;
+  --btn-a: #4a5fc0;
+  --btn-b: #34439a;
+  --indigo-soft: #232c52;
+  --soft-ink: #8ea2f0;
+  --shu: #ff6a57;
+  --shu-soft: rgba(255, 106, 87, .18);
+  --shu-ink: #ff9486;
+  --num-soft: rgba(142, 162, 240, .2);
+  --danger: #ff8d82;
+  --shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 2px 4px rgba(0, 0, 0, .3), 0 14px 32px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  padding: 0 16px 64px;
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "BIZ UDPGothic", "Meiryo", system-ui, sans-serif;
+  font-size: 16px; line-height: 1.7;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+
+/* ── ヘッダー（全幅の帯） ─────────────────────────────── */
+.top {
+  margin: 0 -16px;
+  padding: 26px max(16px, calc((100vw - 1240px) / 2)) 30px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  color: #f4f1ea;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, .06) 0 12%, transparent 12% 100%),
+    linear-gradient(135deg, var(--indigo) 0%, #172050 62%, #101846 100%);
+  border-bottom: 4px solid var(--shu);
+  box-shadow: 0 10px 30px rgba(16, 24, 70, .25);
+}
+.brand { display: flex; align-items: center; gap: 16px; }
+.logo {
+  width: 54px; height: 54px; flex: none;
+  display: grid; place-items: center;
+  background: var(--shu); color: #fff;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "BIZ UDMincho", serif;
+  font-size: 30px; font-weight: 700; line-height: 1;
+  border-radius: 10px; transform: rotate(-4deg);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .22) inset, 0 6px 14px rgba(0, 0, 0, .3);
+}
+.top h1 {
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", "BIZ UDMincho", serif;
+  font-size: 30px; font-weight: 700; letter-spacing: .12em; line-height: 1.25;
+}
+.tag {
+  font-family: system-ui, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  vertical-align: middle; margin-left: 8px;
+  padding: 2px 9px; border-radius: 999px;
+  background: rgba(255, 255, 255, .16); color: #fff;
+}
+.sub { color: rgba(244, 241, 234, .82); font-size: 14px; margin-top: 2px; }
+.top-actions { display: flex; gap: 8px; }
+
+/* ── ボタン ──────────────────────────────────────────── */
+.btn {
+  font: inherit; font-size: 14px; font-weight: 700; letter-spacing: .02em;
+  border: 1px solid transparent; border-radius: 12px;
+  padding: 10px 18px; cursor: pointer;
+  transition: transform .08s ease, box-shadow .15s ease, background .15s ease, filter .15s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+.tab:focus-visible, .chip:focus-visible, .seg button:focus-visible, summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--shu) 55%, transparent); outline-offset: 2px;
+}
+.btn.primary {
+  background: linear-gradient(180deg, var(--btn-a), var(--btn-b));
+  color: #fff; box-shadow: 0 6px 14px rgba(37, 52, 107, .28);
+}
+.btn.primary:hover { filter: brightness(1.1); }
+/* 副ボタン: 淡い地でも「押せる」と分かるよう、枠線を付ける */
+.btn.soft {
+  background: var(--indigo-soft); color: var(--soft-ink);
+  border-color: color-mix(in srgb, var(--indigo-2) 60%, transparent);
+}
+.btn.soft:hover { filter: brightness(.96); border-color: var(--indigo-2); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--ink-2); }
+.btn.ghost:hover { background: var(--card); }
+.top .btn.ghost { border-color: rgba(255, 255, 255, .3); color: #f4f1ea; }
+.top .btn.ghost:hover { background: rgba(255, 255, 255, .12); }
+.btn.danger { color: var(--danger); }
+.btn.file { display: inline-block; }
+.btn.add {
+  background: var(--shu); color: #fff;
+  box-shadow: 0 6px 14px rgba(214, 64, 47, .3);
+}
+.btn.add:hover { filter: brightness(1.07); }
+
+/* ── 原稿／仕上がり ─────────────────────────────────── */
+.stage {
+  max-width: 1240px; margin: 28px auto 0;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  counter-reset: step;
+}
+.pane {
+  position: relative;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; min-width: 0;
+  overflow: hidden;
+}
+.pane::before { /* 朱の見出し帯 */
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--indigo-2);
+}
+.pane.out::before { background: var(--shu); }
+.pane-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 10px 24px;
+}
+.pane-head h2 {
+  counter-increment: step;
+  font-size: 17px; font-weight: 800; letter-spacing: .08em;
+  display: flex; align-items: center; gap: 10px;
+}
+.pane-head h2::before {
+  content: counter(step);
+  display: inline-grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--indigo); color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0;
+}
+.pane.out .pane-head h2::before { background: var(--shu); }
+.meta {
+  font-size: 13px; color: var(--ink-2); font-weight: 600;
+  background: var(--paper-2); border: 1px solid var(--line);
+  padding: 1px 12px; border-radius: 999px;
+}
+.pane.out .meta { color: var(--shu-ink); border-color: color-mix(in srgb, var(--shu) 35%, var(--line)); }
+
+/* 罫線入りの本文欄（原稿用紙） */
+textarea, .output {
+  flex: 1; min-height: 360px; margin: 0 16px 0 24px;
+  border: 1px solid var(--line); border-radius: 12px;
+  color: var(--ink);
+  padding: 14px 16px;
+  font: inherit; font-size: 16px; line-height: 30px;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  resize: vertical;
+  background-color: var(--paper-2);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 29px, var(--rule) 29px, var(--rule) 30px);
+  background-origin: content-box;
+  background-attachment: local;
+}
+.output { overflow: auto; }
+textarea:focus-visible { border-color: var(--indigo-2); }
+::placeholder { color: color-mix(in srgb, var(--ink-2) 75%, transparent); }
+.pane-foot {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 20px 18px 24px;
+}
+.hint { font-size: 13px; color: var(--ink-2); }
+
+/* 置き換わった箇所（朱入れ） */
+mark {
+  background: var(--shu-soft); color: inherit;
+  border-bottom: 2px solid var(--shu);
+  border-radius: 3px 3px 0 0; padding: 0 2px; cursor: pointer;
+  font-weight: 700;
+  box-decoration-break: clone; -webkit-box-decoration-break: clone;
+}
+mark.num { background: var(--num-soft); border-bottom-color: var(--indigo-2); }
+mark:hover { filter: brightness(.95); outline: 2px solid var(--shu); outline-offset: 1px; }
+mark.num:hover { outline-color: var(--indigo-2); }
+
+/* ── 設定パネル ──────────────────────────────────────── */
+.panel {
+  max-width: 1240px; margin: 24px auto 0;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 10px 24px 24px;
+}
+.tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 6px; margin: 8px 0 18px;
+  background: var(--paper-2); border: 1px solid var(--line); border-radius: 14px;
+  width: fit-content; max-width: 100%;
+}
+.tab {
+  font: inherit; font-size: 14.5px; font-weight: 700; color: var(--ink-2);
+  background: none; border: none; border-radius: 10px;
+  padding: 9px 16px; cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.tab:hover { color: var(--ink); }
+.tab.on { background: var(--indigo); color: #fff; box-shadow: 0 4px 10px rgba(37, 52, 107, .25); }
+.badge {
+  font-size: 12px; padding: 0 8px; border-radius: 999px; margin-left: 6px;
+  background: var(--shu); color: #fff; font-weight: 800;
+}
+.tabpane { display: none; }
+.tabpane.on { display: block; }
+
+.intro {
+  background: var(--indigo-soft); border-left: 5px solid var(--indigo-2);
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 4px;
+}
+.intro-lead { font-size: 15px; font-weight: 600; }
+.uses { display: grid; gap: 6px; margin-top: 10px; font-size: 14.5px; }
+.uses li { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.uses li::before {
+  content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--shu);
+  transform: translateY(-1px); flex: none;
+}
+.uses b { font-weight: 800; }
+.uses span { color: var(--ink-2); font-size: 13.5px; }
+.intro .note.small { margin: 10px 0 0; }
+
+.field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 180px; }
+.field > span { font-size: 12.5px; color: var(--ink-2); font-weight: 700; }
+input[type="text"], input[type="search"], select {
+  font: inherit; font-size: 15px; color: var(--ink);
+  background: var(--paper-2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 9px 12px; width: 100%; min-width: 0;
+}
+input[type="text"]:focus, input[type="search"]:focus, select:focus { border-color: var(--indigo-2); }
+.counter-add { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.arrow { color: var(--shu); font-weight: 800; padding-bottom: 10px; }
+
+.rule-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.rule-tools { display: flex; gap: 10px; margin: 14px 0 10px; }
+.rule-tools input { max-width: 320px; }
+.rule-tools select { width: auto; }
+
+.rule-list { display: grid; gap: 8px; margin-top: 6px; }
+/* 列: 種類 / 原文 / → / 修正後 / ゆるく一致 / 使う / 削除 */
+.rule {
+  display: grid; align-items: center; gap: 8px;
+  grid-template-columns: 54px minmax(0, 1fr) 18px minmax(0, 1fr) 112px 62px 54px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px;
+  background: var(--paper-2);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.rule.head { border: none; background: none; padding: 0 10px 2px; margin-top: 8px; }
+.col-label {
+  font-size: 12.5px; font-weight: 800; letter-spacing: .1em; color: var(--ink-2);
+}
+.rule .arrow { padding: 0; text-align: center; }
+.rule.flash { border-color: var(--shu); box-shadow: 0 0 0 4px var(--shu-soft); }
+.rule.off { opacity: .55; }
+.rule .kind {
+  text-align: center; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px;
+  background: var(--indigo-soft); color: var(--soft-ink); white-space: nowrap;
+}
+.rule label.chk { font-size: 13px; color: var(--ink-2); display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+.icon-btn {
+  font: inherit; font-size: 13px; background: none; border: none; color: var(--ink-2);
+  cursor: pointer; padding: 6px 8px; border-radius: 8px;
+}
+.icon-btn:hover { background: var(--shu-soft); color: var(--shu-ink); }
+.empty {
+  color: var(--ink-2); font-size: 14.5px; text-align: center;
+  padding: 26px 12px; border: 2px dashed var(--line); border-radius: 14px; margin-top: 6px;
+}
+
+.note { color: var(--ink-2); font-size: 14.5px; margin-bottom: 14px; }
+.note.small { font-size: 13px; margin-top: 14px; }
+code { background: var(--paper-2); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; font-size: 13px; }
+
+.counter-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; margin: 16px 0; }
+.counter {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px; background: var(--paper-2);
+}
+.counter .name { font-weight: 800; min-width: 3.5em; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); }
+.seg button {
+  font: inherit; font-size: 13px; padding: 6px 11px; border: none; cursor: pointer;
+  background: transparent; color: var(--ink-2); font-weight: 600;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--indigo); color: #fff; font-weight: 800; }
+
+.data-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── 読みが分かれやすい言葉 ──────────────────────────── */
+.suggest {
+  max-width: 1240px; margin: 24px auto 0;
+  background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--shu);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 16px 22px 18px;
+}
+.suggest[hidden] { display: none; }
+.suggest-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.suggest-head h2 { font-size: 16px; font-weight: 800; letter-spacing: .06em; }
+.suggest-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.sg { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--paper-2); }
+.sg.done { opacity: .7; }
+.sg-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sg-word { font-weight: 800; font-size: 17px; }
+.sg-count { font-size: 12.5px; color: var(--ink-2); }
+.sg-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.chip {
+  font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+  padding: 4px 14px; border-radius: 999px; border: 1.5px solid var(--shu);
+  background: transparent; color: var(--shu-ink);
+}
+.chip:hover { background: var(--shu-soft); }
+.chip.on { background: var(--shu); color: #fff; }
+.sg-hint { font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+
+/* ── まとめて追加 ───────────────────────────────────── */
+.bulk { margin-top: 18px; border: 2px dashed var(--line); border-radius: 14px; padding: 10px 16px; }
+.bulk summary { cursor: pointer; font-size: 14.5px; font-weight: 800; color: var(--soft-ink); padding: 3px 0; }
+.bulk textarea {
+  display: block; width: 100%; margin: 10px 0 0; min-height: 120px;
+  background-image: none;
+  padding: 10px 12px; line-height: 1.7; font-size: 15px;
+}
+.bulk-foot { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+
+/* ── スマホ幅 ────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .stage { grid-template-columns: 1fr; gap: 18px; margin-top: 20px; }
+  textarea, .output { min-height: 240px; margin: 0 14px 0 20px; }
+  .top h1 { font-size: 24px; }
+  .logo { width: 46px; height: 46px; font-size: 25px; }
+  .arrow { display: none; }
+  .rule { grid-template-columns: 1fr 1fr; }
+  .rule .kind, .rule .arrow { display: none; }
+  .rule input[type="text"] { grid-column: span 2; }
+  .rule.head { display: none; }
+  .panel { padding: 8px 16px 20px; }
+  .tabs { width: 100%; }
+  .tab { flex: 1; padding: 9px 8px; font-size: 13.5px; }
+}

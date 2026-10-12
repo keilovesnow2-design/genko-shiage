@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>原稿仕上げ</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f5d8a'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white'%3E稿%3C/text%3E%3C/svg%3E">
+  <script>
+    // 保存済みの明るさ設定を、画面が描かれる前に反映する（ちらつき防止）
+    try { var t = localStorage.getItem('genko.v1.theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">稿</span>
+      <div>
+        <h1>原稿仕上げ <span class="tag">仮</span></h1>
+        <p class="sub">貼って、直したい所だけ置き換える。何も登録しなければ、そのまま出ます。</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost" id="btn-theme" type="button" aria-label="画面の明るさを切り替える">🌙 ダークにする</button>
+      <button class="btn ghost" id="btn-sample" type="button">サンプルを入れる</button>
+      <button class="btn ghost" id="btn-clear" type="button">クリア</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <section class="pane" aria-labelledby="in-label">
+      <div class="pane-head">
+        <h2 id="in-label">原稿</h2>
+        <span class="meta" id="in-count">0文字</span>
+      </div>
+      <textarea id="input" spellcheck="false" placeholder="ここに原稿を貼り付けてください"></textarea>
+      <div class="pane-foot">
+        <button class="btn soft" id="btn-add-selection" type="button">選択した部分をルールに追加</button>
+        <span class="hint">原稿の中で言葉や文章を選んでから押します</span>
+      </div>
+    </section>
+
+    <section class="pane out" aria-labelledby="out-label">
+      <div class="pane-head">
+        <h2 id="out-label">仕上がり</h2>
+        <span class="meta" id="out-meta">置き換え 0 か所</span>
+      </div>
+      <div id="output" class="output" aria-live="polite"></div>
+      <div class="pane-foot">
+        <button class="btn primary" id="btn-copy" type="button">仕上がりをコピー</button>
+        <span class="hint" id="copy-msg">色のついた所が置き換わった場所です（押すとルールが開きます）</span>
+      </div>
+    </section>
+  </main>
+
+  <section class="suggest" id="suggest" hidden aria-label="読みが分かれやすい言葉">
+    <div class="suggest-head">
+      <h2>この原稿の、読みが分かれやすい言葉</h2>
+      <span class="meta">読みを押すと、その読みに置き換えるルールを登録します</span>
+    </div>
+    <ul class="suggest-list" id="suggest-list"></ul>
+  </section>
+
+  <section class="panel" aria-label="設定">
+    <div class="tabs" role="tablist">
+      <button role="tab" class="tab on" data-tab="rules" aria-selected="true">置き換えルール <span class="badge" id="rules-badge" title="登録しているルールの数">0件</span></button>
+      <button role="tab" class="tab" data-tab="counters" aria-selected="false">数字の書き方</button>
+      <button role="tab" class="tab" data-tab="data" aria-selected="false">保存・読み込み</button>
+    </div>
+
+    <div class="tabpane on" id="tab-rules">
+      <div class="intro">
+        <p class="intro-lead">原稿の中の言葉や文章を、別の書き方に置き換えます。登録したルールは、次の原稿でもずっと使えます。</p>
+        <ul class="uses">
+          <li><b>言葉の読みを直す</b><span>例：「思考」→「しこう」</span></li>
+          <li><b>一節・一文をまるごと言い換える</b><span>例：長い文章を貼って、別の文章に差し替える</span></li>
+        </ul>
+      </div>
+
+      <div class="rule-actions">
+        <button class="btn add" id="btn-add-row" type="button">＋ ルールを追加</button>
+        <button class="btn ghost" id="btn-clear-rules" type="button">ルールをすべて削除</button>
+        <span class="hint">押すと空の行が増えます。書き込むと自動で保存されます。</span>
+      </div>
+
+      <div class="rule-tools">
+        <input id="rule-search" type="search" placeholder="登録したルールを探す">
+        <select id="rule-filter" aria-label="種類で絞り込み">
+          <option value="all">すべて</option>
+          <option value="word">言葉</option>
+          <option value="phrase">一節・一文</option>
+          <option value="off">使わないことにしたもの</option>
+        </select>
+      </div>
+
+      <div class="rule head" aria-hidden="true">
+        <span></span>
+        <span class="col-label">原文</span>
+        <span></span>
+        <span class="col-label">修正後</span>
+        <span></span><span></span><span></span>
+      </div>
+      <ul class="rule-list" id="rule-list"></ul>
+      <p class="empty" id="rule-empty">まだルールがありません。「＋ ルールを追加」を押して、「原文」と「修正後」を書いてください。</p>
+      <p class="note small">「ゆるく一致」にチェックすると、空白や句読点が違っていても置き換えます（長い文章向け）。</p>
+
+      <details class="bulk">
+        <summary>たくさんまとめて追加する</summary>
+        <p class="note small">1行に1つ、「原文 → 修正後」の形で貼り付けます（区切りは → ／ = ／ カンマ ／ タブ）。同じ言葉が登録済みなら上書きします。</p>
+        <textarea id="bulk-text" rows="5" spellcheck="false" placeholder="思考 → しこう&#10;二十日間 → 20日間"></textarea>
+        <div class="bulk-foot">
+          <button class="btn soft" id="btn-bulk" type="button">まとめて追加</button>
+          <span class="hint" id="bulk-msg"></span>
+        </div>
+      </details>
+    </div>
+
+    <div class="tabpane" id="tab-counters">
+      <div class="intro">
+        <p class="intro-lead">「20日間」「10個」のように、数字と単位が一緒になった言葉の書き方を選びます。音声ツールによって、読み方に癖が出る部分です。</p>
+        <ul class="uses">
+          <li><b>算用数字（20日間）</b><span>例：「にじゅうにちかん」と読まれやすい</span></li>
+          <li><b>漢数字（二十日間）</b><span>例：「はつかかん」と読まれることがある</span></li>
+        </ul>
+        <p class="note small">日付の「二十日」のように、単位が登録されていない言葉は触りません。</p>
+      </div>
+      <ul class="counter-list" id="counter-list"></ul>
+      <form class="counter-add" id="counter-form" autocomplete="off">
+        <label class="field"><span>単位を追加する</span><input id="new-counter" type="text" placeholder="例：人前、袋、日目"></label>
+        <button class="btn soft" type="submit">追加</button>
+      </form>
+    </div>
+
+    <div class="tabpane" id="tab-data">
+      <p class="note">登録したルールと数字の設定は、このブラウザに自動で保存されます。別のパソコンに移すときは、書き出して、そちらで読み込んでください。</p>
+      <div class="data-row">
+        <button class="btn soft" id="btn-export" type="button">書き出す（ファイル保存）</button>
+        <label class="btn soft file">読み込む<input id="file-import" type="file" accept=".json,application/json" hidden></label>
+        <button class="btn ghost danger" id="btn-reset" type="button">すべて初期状態に戻す</button>
+      </div>
+      <p class="note small">ひらがな化ツールのカスタムルール（<code>[{"from":"…","to":"…"}]</code> の形）もそのまま読み込めます。</p>
+      <p class="hint" id="data-msg"></p>
+    </div>
+  </section>
+
+  <script src="engine.js"></script>
+  <script src="watchwords.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
