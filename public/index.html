@@ -28,7 +28,6 @@
     <div class="top-actions">
       <button class="btn ghost" id="btn-theme" type="button" aria-label="画面の明るさを切り替える">🌙 ダークにする</button>
       <button class="btn ghost" id="btn-sample" type="button">サンプルを入れる</button>
-      <button class="btn ghost" id="btn-clear" type="button">クリア</button>
     </div>
   </header>
 
@@ -37,11 +36,12 @@
       <div class="pane-head">
         <h2 id="in-label">原稿</h2>
         <span class="meta" id="in-count">0文字</span>
+        <button class="btn soft clear" id="btn-clear" type="button">原稿を消す</button>
       </div>
       <textarea id="input" spellcheck="false" placeholder="ここに原稿を貼り付けてください"></textarea>
       <div class="pane-foot">
         <button class="btn soft" id="btn-add-selection" type="button">選択した部分をルールに追加</button>
-        <span class="hint">原稿の中で言葉や文章を選んでから押します</span>
+        <span class="hint" id="in-hint">原稿の中で言葉や文章を選んでから押します</span>
       </div>
     </section>
 
@@ -60,8 +60,8 @@
 
   <section class="suggest" id="suggest" hidden aria-label="読みが分かれやすい言葉">
     <div class="suggest-head">
-      <h2>この原稿の、読みが分かれやすい言葉</h2>
-      <span class="meta">読みを押すと、その読みに置き換えるルールを登録します</span>
+      <h2>この原稿に出てくる、置き換えの言葉</h2>
+      <span class="meta">押すとオン、もう一度押すとオフ。何度も出る言葉は「場所ごとに決める」で1か所ずつ選べます</span>
     </div>
     <ul class="suggest-list" id="suggest-list"></ul>
   </section>

@@ -94,4 +94,31 @@ t('まとめて追加の解析', () => {
   assert.strictEqual(r.skipped, 2);
 });
 
+t('場所ごとの指定：その場所だけそのまま／別の読みにできる', () => {
+  const text = 'ほおに手を当てた。ほおが赤い。ほおを叩く。';
+  const rules = [{ id: 'a', from: 'ほお', to: '頬', enabled: true }];
+  const base = E.apply(text, { rules, counters: [] });
+  assert.strictEqual(base.sites.length, 3);
+  assert.strictEqual(base.text, '頬に手を当てた。頬が赤い。頬を叩く。');
+  const s2 = base.sites[1];
+  const keep = E.apply(text, { rules, counters: [], places: [{ from: 'ほお', ctx: s2.ctx, to: null }] });
+  assert.strictEqual(keep.text, '頬に手を当てた。ほおが赤い。頬を叩く。');
+  const other = E.apply(text, { rules, counters: [], places: [{ from: 'ほお', ctx: s2.ctx, to: '類' }] });
+  assert.strictEqual(other.text, '頬に手を当てた。類が赤い。頬を叩く。');
+});
+t('登録がなくても、場所ごとに読みを決められる（watch で場所を取得）', () => {
+  const text = '今日は晴れ。今日も晴れ。';
+  const none = E.apply(text, { rules: [], counters: [] }, { watch: ['今日'] });
+  assert.strictEqual(none.text, text);
+  assert.strictEqual(none.sites.length, 2);
+  assert.strictEqual(none.sites[0].global, null);
+  const one = E.apply(text, { rules: [], counters: [], places: [{ from: '今日', ctx: none.sites[1].ctx, to: 'こんにち' }] });
+  assert.strictEqual(one.text, '今日は晴れ。こんにちも晴れ。');
+});
+t('使わない設定のルールでも、場所の一覧には載る', () => {
+  const r = E.apply('人気です。人気だ。', { rules: [{ id: 'a', from: '人気', to: 'にんき', enabled: false }], counters: [] }, { watch: ['人気'] });
+  assert.strictEqual(r.text, '人気です。人気だ。');
+  assert.strictEqual(r.sites.length, 2);
+});
+
 console.log(`\n${n} tests passed`);

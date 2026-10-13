@@ -19,6 +19,8 @@
   --shu-soft: rgba(214, 64, 47, .13);
   --shu-ink: #a82b1c;
   --num-soft: rgba(37, 52, 107, .12);
+  --shu-mark: rgba(214, 64, 47, .30);   /* 置き換わった所の地色（はっきり見えるように） */
+  --num-mark: rgba(59, 79, 154, .28);
   --danger: #b4302a;
   --shadow: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 2px 4px rgba(40, 30, 10, .05), 0 14px 32px rgba(40, 30, 10, .08);
   --radius: 18px;
@@ -43,6 +45,8 @@
     --shu-soft: rgba(255, 106, 87, .18);
     --shu-ink: #ff9486;
     --num-soft: rgba(142, 162, 240, .2);
+  --shu-mark: rgba(255, 106, 87, .38);
+  --num-mark: rgba(142, 162, 240, .4);
     --danger: #ff8d82;
     --shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 2px 4px rgba(0, 0, 0, .3), 0 14px 32px rgba(0, 0, 0, .35);
   }
@@ -66,6 +70,8 @@
   --shu-soft: rgba(255, 106, 87, .18);
   --shu-ink: #ff9486;
   --num-soft: rgba(142, 162, 240, .2);
+  --shu-mark: rgba(255, 106, 87, .38);
+  --num-mark: rgba(142, 162, 240, .4);
   --danger: #ff8d82;
   --shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 2px 4px rgba(0, 0, 0, .3), 0 14px 32px rgba(0, 0, 0, .35);
 }
@@ -178,6 +184,7 @@ ul { padding: 0; list-style: none; }
   padding: 16px 20px 10px 24px;
 }
 .pane-head h2 {
+  margin-right: auto;
   counter-increment: step;
   font-size: 17px; font-weight: 800; letter-spacing: .08em;
   display: flex; align-items: center; gap: 10px;
@@ -221,13 +228,13 @@ textarea:focus-visible { border-color: var(--indigo-2); }
 
 /* 置き換わった箇所（朱入れ） */
 mark {
-  background: var(--shu-soft); color: inherit;
-  border-bottom: 2px solid var(--shu);
+  background: var(--shu-mark); color: inherit;
+  border-bottom: 3px solid var(--shu);
   border-radius: 3px 3px 0 0; padding: 0 2px; cursor: pointer;
   font-weight: 700;
   box-decoration-break: clone; -webkit-box-decoration-break: clone;
 }
-mark.num { background: var(--num-soft); border-bottom-color: var(--indigo-2); }
+mark.num { background: var(--num-mark); border-bottom-color: var(--indigo-2); }
 mark:hover { filter: brightness(.95); outline: 2px solid var(--shu); outline-offset: 1px; }
 mark.num:hover { outline-color: var(--indigo-2); }
 
@@ -352,7 +359,19 @@ code { background: var(--paper-2); border: 1px solid var(--line); border-radius:
 .suggest-head h2 { font-size: 16px; font-weight: 800; letter-spacing: .06em; }
 .suggest-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
 .sg { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--paper-2); }
-.sg.done { opacity: .7; }
+.sg.done { border-color: color-mix(in srgb, var(--shu) 55%, var(--line)); background: color-mix(in srgb, var(--shu) 6%, var(--paper-2)); }
+.sg:has(details[open]) { grid-column: 1 / -1; }
+.sg-places { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.sg-places summary { cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--soft-ink); }
+.site-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.site {
+  display: grid; grid-template-columns: minmax(180px, 1fr) auto auto; gap: 8px 12px; align-items: center;
+  padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card);
+}
+.site-text { font-size: 14px; overflow-wrap: anywhere; }
+.site-now { font-size: 13px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.site-now.changed { color: var(--shu-ink); }
+@media (max-width: 720px) { .site { grid-template-columns: 1fr; } }
 .sg-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .sg-word { font-weight: 800; font-size: 17px; }
 .sg-count { font-size: 12.5px; color: var(--ink-2); }
@@ -401,3 +420,11 @@ code { background: var(--paper-2); border: 1px solid var(--line); border-radius:
 }
 .top .sub { font-size: 15px; }
 @media (max-width: 820px) { .use-chips li { font-size: 12px; } }
+
+/* 原稿を消す／元に戻す */
+.pane-head .meta { margin-right: 10px; }
+.btn.clear { padding: 5px 14px; font-size: 13.5px; }
+.link-btn {
+  font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; margin-left: 8px;
+  background: none; border: none; padding: 0; color: var(--shu-ink); text-decoration: underline;
+}

@@ -25,19 +25,23 @@
     counterList: $('counter-list'), counterForm: $('counter-form'), newCounter: $('new-counter'),
     dataMsg: $('data-msg'),
     suggest: $('suggest'), suggestList: $('suggest-list'),
-    bulkText: $('bulk-text'), bulkMsg: $('bulk-msg'),
+    bulkText: $('bulk-text'), bulkMsg: $('bulk-msg'), inHint: $('in-hint'),
   };
 
   const COPY_HINT = document.getElementById('copy-msg').textContent;
+  const IN_HINT = document.getElementById('in-hint').textContent;
 
   // ── 状態 ──────────────────────────────────────────────────────────
   function defaultState() {
-    return { rules: [], counters: GenkoEngine.DEFAULT_COUNTERS.map((c) => Object.assign({}, c)) };
+    return { rules: [], counters: GenkoEngine.DEFAULT_COUNTERS.map((c) => Object.assign({}, c)), places: [] };
   }
   function loadState() {
     try {
       const s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
-      if (s && Array.isArray(s.rules) && Array.isArray(s.counters)) return s;
+      if (s && Array.isArray(s.rules) && Array.isArray(s.counters)) {
+        if (!Array.isArray(s.places)) s.places = [];
+        return s;
+      }
     } catch (_) { /* 保存領域が使えない環境でも動かす */ }
     return defaultState();
   }
@@ -50,10 +54,16 @@
 
   // ── 仕上がりの描画 ────────────────────────────────────────────────
   let lastChanges = [];
+  let lastSites = [];
   function refreshOutput() {
     const src = el.input.value;
-    const res = GenkoEngine.apply(src, state);
+    const res = GenkoEngine.apply(src, state, { watch: suggestWords() });
     lastChanges = res.changes;
+    lastSites = res.sites;
+    // 原稿の中に見つからなくなった「場所ごとの指定」は、片づける
+    const live = new Set(res.sites.map((x) => x.word + '\u0002' + x.ctx));
+    const kept = state.places.filter((p) => live.has(p.from + '\u0002' + p.ctx));
+    if (kept.length !== state.places.length) { state.places = kept; saveState(); }
     el.inCount.textContent = src.length + '文字';
     el.outMeta.textContent = '置き換え ' + res.changes.length + ' か所';
 
@@ -72,43 +82,143 @@
     if (pos < res.text.length) frag.appendChild(document.createTextNode(res.text.slice(pos)));
     el.output.replaceChildren(frag);
     el.output.dataset.text = res.text;
-    renderSuggest(src);
+    renderSuggest(src, res.sites);
   }
 
-  // ── 要注意語（原稿に出てきた、読みが分かれやすい語） ──────────────────
-  function renderSuggest(src) {
-    const hits = GenkoEngine.findWatch(src, window.GenkoWatchWords || [], state.rules);
-    el.suggest.hidden = hits.length === 0;
-    el.suggestList.replaceChildren(...hits.map((h) => {
+  // ── 原稿に出てきた言葉の一覧（読みが分かれやすい語＋自分で登録したルール） ──────
+  // 1つの言葉につき1枚のカード。読みを押すとオン、もう一度押すとオフ。
+  // 同じ言葉が2回以上出るときは「場所ごとに決める」で、1か所ずつ選べる。
+  const openCards = new Set();
+
+  function suggestWords() {
+    const set = new Set();
+    (window.GenkoWatchWords || []).forEach((w) => { if (w && w.word) set.add(w.word); });
+    state.rules.forEach((r) => {
+      if (r && typeof r.from === 'string' && r.from.trim() !== '' && r.to != null && String(r.to) !== '') set.add(r.from);
+    });
+    return Array.from(set);
+  }
+
+  // mode: 'default'（全体どおり）／'keep'（その場所だけそのまま）／'to'（その場所だけ to に置き換え）
+  function setPlace(word, ctx, mode, to) {
+    state.places = state.places.filter((p) => !(p.from === word && p.ctx === ctx));
+    if (mode === 'keep') state.places.push({ from: word, ctx, to: null });
+    else if (mode === 'to') state.places.push({ from: word, ctx, to });
+    commit(false);
+  }
+
+  function snippet(src, s) {
+    const clip = (t) => t.replace(/\r?\n/g, '⏎');
+    return clip(src.slice(Math.max(0, s.start - 8), s.start)) + '【' + s.matched + '】' + clip(src.slice(s.end, s.end + 8));
+  }
+
+  function renderSuggest(src, sites) {
+    const groups = new Map();
+    sites.forEach((s) => {
+      if (!groups.has(s.word)) groups.set(s.word, []);
+      groups.get(s.word).push(s);
+    });
+    const watch = new Map((window.GenkoWatchWords || []).map((w) => [w.word, w]));
+    el.suggest.hidden = groups.size === 0;
+
+    el.suggestList.replaceChildren(...Array.from(groups.entries()).map(([word, list]) => {
+      const info = watch.get(word);
+      const rule = state.rules.find((r) => r.from === word && r.to != null && String(r.to) !== '');
+      const ruleOn = !!rule && rule.enabled !== false;
+      const readings = info ? info.readings.slice() : [];
+      if (rule && !readings.includes(String(rule.to))) readings.push(String(rule.to));
+
       const li = document.createElement('li');
-      li.className = 'sg' + (h.registeredTo !== null ? ' done' : '');
+      li.className = 'sg' + (ruleOn ? ' done' : '');
+      li.dataset.word = word;
+
       const top = document.createElement('div');
       top.className = 'sg-top';
       const w = document.createElement('span');
-      w.className = 'sg-word'; w.textContent = h.word;
+      w.className = 'sg-word'; w.textContent = word;
       const n = document.createElement('span');
       n.className = 'sg-count';
-      n.textContent = h.count + '回' + (h.registeredTo !== null ? '　登録済み → ' + h.registeredTo : '');
+      n.textContent = list.length + '回' + (ruleOn ? '　置き換え中 → ' + rule.to : rule ? '　（オフ）' : '');
       top.append(w, n);
+
       const chips = document.createElement('div');
       chips.className = 'sg-chips';
-      h.readings.forEach((r) => {
+      readings.forEach((r) => {
+        const on = ruleOn && String(rule.to) === r;
         const b = document.createElement('button');
         b.type = 'button';
-        b.className = 'chip' + (h.registeredTo === r ? ' on' : '');
+        b.className = 'chip' + (on ? ' on' : '');
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
         b.textContent = r;
-        b.title = '「' + h.word + '」→「' + r + '」を登録';
-        b.addEventListener('click', () => upsertRule(h.word, r));
+        b.title = on ? '押すと、この置き換えをやめます（もとの言葉に戻ります）' : '「' + word + '」→「' + r + '」に置き換えます';
+        b.addEventListener('click', () => {
+          if (on) { rule.enabled = false; commit(true); }
+          else upsertRule(word, r);
+        });
         chips.appendChild(b);
       });
       li.append(top, chips);
-      if (h.hint) {
+
+      const hint = info ? info.hint : '自分で登録したルール';
+      if (hint) {
         const p = document.createElement('div');
-        p.className = 'sg-hint'; p.textContent = h.hint;
+        p.className = 'sg-hint'; p.textContent = hint;
         li.appendChild(p);
       }
+
+      if (list.length >= 2) li.appendChild(placesBlock(src, word, list, readings));
       return li;
     }));
+  }
+
+  // 「場所ごとに決める」: 出てくる場所を1つずつ並べて、全体どおり／そのまま／読み を選ぶ
+  function placesBlock(src, word, list, readings) {
+    const byCtx = new Map();
+    list.forEach((s) => {
+      if (!byCtx.has(s.ctx)) byCtx.set(s.ctx, { first: s, n: 0 });
+      byCtx.get(s.ctx).n++;
+    });
+    const set = list.filter((s) => s.placed).length;
+
+    const d = document.createElement('details');
+    d.className = 'sg-places';
+    d.open = openCards.has(word);
+    d.addEventListener('toggle', () => { if (d.open) openCards.add(word); else openCards.delete(word); });
+    const sum = document.createElement('summary');
+    sum.textContent = '場所ごとに決める' + (set ? '（' + set + ' か所を個別に指定中）' : '');
+    d.appendChild(sum);
+
+    const ul = document.createElement('ul');
+    ul.className = 'site-list';
+    byCtx.forEach(({ first, n }, ctx) => {
+      const row = document.createElement('li');
+      row.className = 'site';
+      const txt = document.createElement('div');
+      txt.className = 'site-text';
+      txt.textContent = snippet(src, first) + (n > 1 ? '　（同じ並びが' + n + 'か所）' : '');
+      const now = document.createElement('span');
+      now.className = 'site-now' + (first.current === first.matched ? '' : ' changed');
+      now.textContent = '今の仕上がり：' + (first.current === first.matched ? 'そのまま' : first.current);
+      const place = state.places.find((p) => p.from === word && p.ctx === ctx);
+      const seg = document.createElement('span');
+      seg.className = 'seg';
+      const opts = [
+        { label: '全体どおり', mode: 'default', on: !place },
+        { label: 'そのまま', mode: 'keep', on: !!place && place.to === null },
+      ].concat(readings.map((r) => ({ label: r, mode: 'to', to: r, on: !!place && place.to === r })));
+      opts.forEach((o) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = o.label;
+        b.className = o.on ? 'on' : '';
+        b.setAttribute('aria-pressed', o.on ? 'true' : 'false');
+        b.addEventListener('click', () => setPlace(word, ctx, o.mode, o.to));
+        seg.appendChild(b);
+      });
+      row.append(txt, now, seg);
+      ul.appendChild(row);
+    });
+    d.appendChild(ul);
+    return d;
   }
 
   // 同じ変換元があれば上書き、なければ追加。追加・更新があれば true
@@ -252,7 +362,12 @@
     if (!m) return;
     const c = lastChanges[Number(m.dataset.idx)];
     if (!c) return;
-    if (c.type === 'rule') {
+    if (c.type === 'rule' && !c.ruleId) {
+      // 登録のない言葉を、場所ごとの指定で置き換えた箇所 → 一覧のカードを開く
+      openCards.add(c.word);
+      renderSuggest(el.input.value, lastSites);
+      flash(Array.from(el.suggestList.children).find((x) => x.dataset.word === c.word));
+    } else if (c.type === 'rule') {
       showTab('rules');
       el.ruleSearch.value = ''; el.ruleFilter.value = 'all';
       renderRules();
@@ -348,7 +463,32 @@
   });
 
   $('btn-sample').addEventListener('click', () => { el.input.value = SAMPLE; el.input.dispatchEvent(new Event('input')); });
-  $('btn-clear').addEventListener('click', () => { el.input.value = ''; el.input.dispatchEvent(new Event('input')); el.input.focus(); });
+  // 原稿を消す。仕上がり・一覧も一緒に消える。押し間違えても、少しの間は「元に戻す」で戻せる
+  let undoTimer = null;
+  function restoreInHint() { el.inHint.textContent = IN_HINT; clearTimeout(undoTimer); }
+  $('btn-clear').addEventListener('click', () => {
+    if (!el.input.value) { el.input.focus(); return; }
+    const prevText = el.input.value, prevPlaces = state.places;
+    el.input.value = '';
+    state.places = [];
+    saveState();
+    el.input.dispatchEvent(new Event('input'));
+    el.input.focus();
+    const msg = document.createElement('span');
+    msg.textContent = '原稿を消しました。';
+    const undo = document.createElement('button');
+    undo.type = 'button'; undo.className = 'link-btn'; undo.textContent = '元に戻す';
+    undo.addEventListener('click', () => {
+      el.input.value = prevText;
+      state.places = prevPlaces;
+      saveState();
+      el.input.dispatchEvent(new Event('input'));
+      restoreInHint();
+    });
+    el.inHint.replaceChildren(msg, undo);
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(restoreInHint, 10000);
+  });
 
   // ── 保存・読み込み ────────────────────────────────────────────────
   function say(msg) { el.dataMsg.textContent = msg; }

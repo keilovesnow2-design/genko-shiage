@@ -84,7 +84,9 @@
   // 「ゆるく一致」: 空白・句読点の違いを無視して照合する
   const LOOSE_GAP = '[\\s\\u3000、。，,．.]*';
   function ruleSource(rule) {
-    if (!rule.loose) return escRe(rule.from);
+    // 仮のルール（登録のない言葉）で、数字始まりの語は、より長い数字の途中を拾わない
+    const guard = rule.synthetic && /^[0-9０-９]/.test(rule.from) ? '(?<![0-9０-９])' : '';
+    if (!rule.loose) return guard + escRe(rule.from);
     const chars = Array.from(rule.from.replace(/[\s　、。，,．.]/g, ''));
     if (chars.length === 0) return escRe(rule.from);
     return chars.map(escRe).join(LOOSE_GAP);
@@ -94,13 +96,18 @@
   // 「数十個」「何百個」「1.5個」「1,000個の途中」を誤って拾わないための否定後読み
   const NUM_GUARD = '(?<![数何幾\\d０-９.,，])';
 
-  function buildRuleRegex(rules) {
+  // extras: 「登録がなくても、原稿のどこにあるかだけ知りたい」言葉（そのまま出力する仮のルールとして足す）
+  function buildRuleRegex(rules, extras) {
     const usable = rules
       // 「置き換えた後」が空のルールは、書きかけとみなして使わない（選んだだけで言葉が消えるのを防ぐ）
       .filter((r) => r && r.enabled !== false && typeof r.from === 'string' && r.from.trim() !== ''
         && r.to != null && String(r.to) !== '')
-      .map((r, i) => ({ r, i }))
-      .sort((a, b) => b.r.from.length - a.r.from.length || a.i - b.i);
+      .map((r, i) => ({ r, i }));
+    (extras || []).forEach((w, k) => {
+      if (typeof w !== 'string' || w.trim() === '') return;
+      usable.push({ r: { id: null, from: w, to: w, synthetic: true }, i: 1e9 + k });
+    });
+    usable.sort((a, b) => b.r.from.length - a.r.from.length || a.i - b.i);
     if (usable.length === 0) return null;
     // 同じ変換元が重複していたら先に登録された方だけ有効
     const seen = new Set();
@@ -126,15 +133,30 @@
   }
 
   // ── 本体 ────────────────────────────────────────────────────────────
-  // state: { rules: [{id, from, to, loose, enabled}], counters: [{counter, form}] }
-  // 返り値: { text, changes: [{ start, end, from, to, type, ruleId? }] }（start/end は出力側の位置）
-  function apply(input, state) {
+  // 「場所ごとの指定」の目印。言葉の前後 CTX 文字を使う（原稿の別の場所を直しても、指定がずれない）
+  const CTX = 6;
+  function ctxOf(text, start, end) {
+    return text.slice(Math.max(0, start - CTX), start) + '' + text.slice(end, end + CTX);
+  }
+
+  // state: { rules: [{id, from, to, loose, enabled}], counters: [{counter, form}],
+  //          places?: [{from, ctx, to}] }   places: 場所ごとの指定。to が null なら、その場所だけそのまま
+  // opts:  { watch?: [言葉] }  登録がなくても、原稿のどこにあるかを sites に載せたい言葉
+  // 返り値: { text, changes: [{ start, end, from, to, type, ruleId?, word? }]（start/end は出力側の位置）,
+  //          sites: [{ word, ctx, start, end, matched, global, current, placed }]（start/end は原稿側の位置。
+  //                  global は登録ルールの置き換え先で、登録がなければ null。current は実際に出力した文字） }
+  function apply(input, state, opts) {
     const text = typeof input === 'string' ? input : '';
     const rules = (state && state.rules) || [];
     const counters = (state && state.counters) || [];
-    const rb = buildRuleRegex(rules);
+    const places = (state && state.places) || [];
+    const placeMap = new Map();
+    places.forEach((p) => { if (p && typeof p.from === 'string') placeMap.set(p.from + '' + p.ctx, p); });
+    const extras = ((opts && opts.watch) || []).concat(places.map((p) => p.from));
+    const rb = buildRuleRegex(rules, extras);
     const cb = buildCounterRegex(counters);
-    if (!rb && !cb) return { text, changes: [] };
+    const sites = [];
+    if (!rb && !cb) return { text, changes: [], sites };
 
     let out = '';
     const changes = [];
@@ -167,11 +189,18 @@
       if (t === 'rule') {
         const gi = m.slice(2).findIndex((g) => g !== undefined);
         const rule = rb.list[gi];
-        const to = rule.to == null ? '' : String(rule.to);
+        const ctx = ctxOf(text, m.index, m.index + m[0].length);
+        const place = placeMap.get(rule.from + '' + ctx);
+        let to = rule.to == null ? '' : String(rule.to);
+        if (place) to = place.to === null || place.to === undefined ? m[0] : String(place.to);
+        sites.push({
+          word: rule.from, ctx, start: m.index, end: m.index + m[0].length, matched: m[0],
+          global: rule.synthetic ? null : String(rule.to), current: to, placed: !!place,
+        });
         if (to === m[0]) {
           out += m[0];
         } else {
-          changes.push({ start: out.length, end: out.length + to.length, from: m[0], to, type: 'rule', ruleId: rule.id });
+          changes.push({ start: out.length, end: out.length + to.length, from: m[0], to, type: 'rule', ruleId: rule.id, word: rule.from });
           out += to;
         }
       } else {
@@ -187,7 +216,7 @@
       }
     }
     out += text.slice(pos);
-    return { text: out, changes };
+    return { text: out, changes, sites };
   }
 
   // 原稿に出てくる要注意語を探す。list は watchwords.js の形式。
